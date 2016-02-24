@@ -37,6 +37,7 @@ type result struct {
 	Permalink string
 	Thumbnail string
 	Title     string
+	Price     float64
 }
 
 type Query struct {
@@ -144,6 +145,7 @@ func updateQuery(q *Query) {
 		newResults[v.Id] = v
 	}
 	q.Available = newResults
+	log.Printf("available: %d", len(q.Available))
 	q.Unlock()
 
 }
@@ -209,7 +211,8 @@ func main() {
 		log.Printf("Deleting %q from endpoint %q", id, endpoint)
 
 		defer func() {
-			http.Redirect(w, r, "/listing?endpoint="+endpoint, http.StatusFound)
+			w.Write([]byte(id))
+			// http.Redirect(w, r, "/listing?endpoint="+endpoint, http.StatusFound)
 		}()
 		queries[endpoint].Lock()
 		defer queries[endpoint].Unlock()
@@ -279,6 +282,7 @@ var tmpl = template.Must(template.New("rslt").Parse(`
 <html>
 	<head>
 		<title>Busquedas ML</title>
+		<script src="http://code.jquery.com/jquery-2.2.1.min.js"></script>
 	</head>
 	<body>
 		<h1>{{.Endpoint}}</h1>
@@ -287,14 +291,25 @@ var tmpl = template.Must(template.New("rslt").Parse(`
 			{{range $id, $article := .Available}}
 			<div class='result'>
 				<p>
-				<a href="{{$article.Permalink}}">{{$article.Title}}</a></p>
-				<p><img height="250px" width="250px" src="{{$article.Thumbnail}}"/>
-				<a href="/visited?id={{$article.Id}}&endpoint={{$endpoint}}">Done</a>
+					<a href="{{$article.Permalink}}">{{$article.Title}} ({{$article.Price}})</a></p>
+					<p><img height="250px" width="250px" src="{{$article.Thumbnail}}"/>
+					<a class="done" id="{{$article.Id}}" href="" endpoint="{{$endpoint}}">Done</a>
 				</p>
 			</div>
 			{{end}}
 		</div>
 		<a href="/visitedAll?{{range $id, $article := .Available}}id={{$id}}&{{end}}&endpoint={{$endpoint}}">All Visited</a>
 	</body>
+	<script>
+		$('.done').click(function(e) {
+			e.preventDefault();
+			var articleId = $(this).attr('id');
+			var endpoint = $(this).attr('endpoint');
+			$.get("/visited?id=" + articleId + "&endpoint=" + endpoint, function(data) {
+				$('#' + data).closest('.result').remove();
+			});
+		});
+	</script>
 </html>
 `))
+

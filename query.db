@@ -1,0 +1,14 @@
+{
+	"kona": {
+		"Endpoint": "kona",
+		"Params": {"q": "kona"}
+	}, 
+	"daily": {
+		"Endpoint": "daily",
+		"Params": {"since": "today", "category": "MLA6143"}	
+	},
+	"all": {
+		"Endpoint": "all",
+		"Params": { "category": "MLA6143" }
+	}
+}
